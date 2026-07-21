@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.4">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="es"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1">&lt;meta charset="utf-8" /&gt;</p>
+<p class="p1">&lt;title&gt;Censo de Árboles - Plaza Uruguaya&lt;/title&gt;</p>
+<p class="p1">&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /&gt;</p>
+<p class="p1">&lt;script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"&gt;&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;!-- Librería para leer GeoPackage (.gpkg) en el navegador --&gt;</p>
+<p class="p1">&lt;script src="https://unpkg.com/@ngageoint/geopackage@4.2.4/dist/geopackage.min.js"&gt;&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>html, body, #map { height: 100%; margin: 0; padding: 0; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.tree-label {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background: transparent;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border: none;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box-shadow: none;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family: Arial, sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size: 13px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-weight: bold;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>color: #1a1a1a;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>text-shadow:</p>
+<p class="p1"><span class="Apple-converted-space">      </span>-1px -1px 0 #fff, 1px -1px 0 #fff,</p>
+<p class="p1"><span class="Apple-converted-space">      </span>-1px<span class="Apple-converted-space">  </span>1px 0 #fff, 1px<span class="Apple-converted-space">  </span>1px 0 #fff;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>white-space: nowrap;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>.leaflet-container {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background: #f7f7f5;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>#loading {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>position: absolute;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>top: 10px; left: 50%;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>transform: translateX(-50%);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>background: white;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>padding: 6px 14px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>border-radius: 4px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-family: Arial, sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>font-size: 13px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>box-shadow: 0 1px 4px rgba(0,0,0,0.3);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>z-index: 1000;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p1">&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1">&lt;div id="map"&gt;&lt;/div&gt;</p>
+<p class="p1">&lt;div id="loading"&gt;Cargando capas...&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>var map = L.map('map', { zoomControl: true });</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>attribution: '&amp;copy; &lt;a href="https://www.openstreetmap.org/copyright"&gt;OpenStreetMap&lt;/a&gt; contributors &amp;copy; &lt;a href="https://carto.com/attributions"&gt;CARTO&lt;/a&gt;',</p>
+<p class="p1"><span class="Apple-converted-space">    </span>subdomains: 'abcd',</p>
+<p class="p1"><span class="Apple-converted-space">    </span>maxZoom: 20</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}).addTo(map);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>map.setView([-25.2969, -57.6280], 17);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>var allLayers = [];</p>
+<p class="p1"><span class="Apple-converted-space">  </span>var layersToLoad = 2;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function fitAll() {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>var group = new L.featureGroup(allLayers);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (group.getLayers().length &gt; 0) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>map.fitBounds(group.getBounds(), { padding: [20, 20] });</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>function layerDone() {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>layersToLoad--;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (layersToLoad &lt;= 0) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('loading').style.display = 'none';</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>fitAll();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ---- Icono rombo rojo (individuos_cha) ----</p>
+<p class="p1"><span class="Apple-converted-space">  </span>var diamondIcon = L.divIcon({</p>
+<p class="p1"><span class="Apple-converted-space">    </span>className: '',</p>
+<p class="p1"><span class="Apple-converted-space">    </span>html: '&lt;div style="width:16px;height:16px;background:#e30613;border:1px solid #7a0000;transform:rotate(45deg);"&gt;&lt;/div&gt;',</p>
+<p class="p1"><span class="Apple-converted-space">    </span>iconSize: [16, 16],</p>
+<p class="p1"><span class="Apple-converted-space">    </span>iconAnchor: [8, 8]</p>
+<p class="p1"><span class="Apple-converted-space">  </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ---- Función genérica: abre un .gpkg y devuelve un GeoJSON FeatureCollection ----</p>
+<p class="p1"><span class="Apple-converted-space">  </span>function gpkgToGeoJSON(url) {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return fetch(url)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>.then(res =&gt; res.arrayBuffer())</p>
+<p class="p1"><span class="Apple-converted-space">      </span>.then(buffer =&gt; GeoPackageAPI.open(new Uint8Array(buffer)))</p>
+<p class="p1"><span class="Apple-converted-space">      </span>.then(geoPackage =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>var tableName = geoPackage.getFeatureTables()[0]; // usa la primera tabla de features</p>
+<p class="p1"><span class="Apple-converted-space">        </span>var features = [];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>geoPackage.iterateGeoJSONFeatures(tableName, feature =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>features.push(feature);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>return { type: "FeatureCollection", features: features };</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ---- Carga censo_arboreo_cha (puntos verdes) ----</p>
+<p class="p1"><span class="Apple-converted-space">  </span>gpkgToGeoJSON('censo_arboreo_cha.gpkg')</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.then(geojson =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>var layer = L.geoJSON(geojson, {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>pointToLayer: function (feature, latlng) {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>return L.circleMarker(latlng, {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>radius: 6,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>fillColor: "#1a5d1a",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>color: "#0d3d0d",</p>
+<p class="p1"><span class="Apple-converted-space">            </span>weight: 1,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>opacity: 1,</p>
+<p class="p1"><span class="Apple-converted-space">            </span>fillOpacity: 0.85</p>
+<p class="p1"><span class="Apple-converted-space">          </span>});</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}).addTo(map);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>allLayers.push(layer);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>layerDone();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>})</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.catch(err =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>console.error('Error cargando censo_arboreo_cha.gpkg:', err);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>layerDone();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// ---- Carga individuos_cha (rombos rojos + etiqueta Nro. Indiv) ----</p>
+<p class="p1"><span class="Apple-converted-space">  </span>gpkgToGeoJSON('individuos_cha.gpkg')</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.then(geojson =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>var layer = L.geoJSON(geojson, {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>pointToLayer: function (feature, latlng) {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>return L.marker(latlng, { icon: diamondIcon });</p>
+<p class="p1"><span class="Apple-converted-space">        </span>},</p>
+<p class="p1"><span class="Apple-converted-space">        </span>onEachFeature: function (feature, lyr) {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>var label = feature.properties["Nro. Indiv"] || '';</p>
+<p class="p1"><span class="Apple-converted-space">          </span>if (label !== '') {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>lyr.bindTooltip(String(label), {</p>
+<p class="p1"><span class="Apple-converted-space">              </span>permanent: true,</p>
+<p class="p1"><span class="Apple-converted-space">              </span>direction: 'right',</p>
+<p class="p1"><span class="Apple-converted-space">              </span>offset: [10, 0],</p>
+<p class="p1"><span class="Apple-converted-space">              </span>className: 'tree-label'</p>
+<p class="p1"><span class="Apple-converted-space">            </span>});</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}).addTo(map);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>allLayers.push(layer);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>layerDone();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>})</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.catch(err =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>console.error('Error cargando individuos_cha.gpkg:', err);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>layerDone();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
